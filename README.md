@@ -1,1 +1,149 @@
-# Al-Fisha-Ramadhana-04
+import tkinter as tk
+from tkinter import messagebox, ttk
+from datetime import datetime
+
+buku_tersedia = [
+    "Laskar Pelangi",
+    "Bumi Manusia",
+    "Negeri 5 Menara",
+    "Ayat-Ayat Cinta",
+    "Perahu Kertas"
+]
+
+stok_buku = {
+    "Laskar Pelangi": 3,
+    "Bumi Manusia": 2,
+    "Negeri 5 Menara": 4,
+    "Ayat-Ayat Cinta": 1,
+    "Perahu Kertas": 2
+}
+
+data_peminjaman = []
+
+def update_tabel_stok():
+    for row in tree_stok.get_children():
+        tree_stok.delete(row)
+    for judul, stok in stok_buku.items():
+        tree_stok.insert('', 'end', values=(judul, stok))
+
+def pinjam_buku():
+    nama = entry_nama.get()
+    buku = combo_buku.get()
+    tanggal_kembali = entry_tanggal_kembali.get()
+    tanggal_pinjam = datetime.now().strftime("%d-%m-%Y")
+
+    if not nama or not buku or not tanggal_kembali:
+        messagebox.showwarning("Input Salah", "Semua field harus diisi!")
+        return
+
+    if stok_buku[buku] <= 0:
+        messagebox.showerror("Stok Habis", f"Stok buku '{buku}' habis!")
+        return
+
+    stok_buku[buku] -= 1
+    data_peminjaman.append((nama, buku, tanggal_pinjam, tanggal_kembali))
+    update_tabel()
+    update_tabel_stok()
+    messagebox.showinfo("Berhasil", f"Buku '{buku}' berhasil dipinjam oleh {nama}")
+    entry_nama.delete(0, tk.END)
+    combo_buku.set('')
+    entry_tanggal_kembali.delete(0, tk.END)
+
+def update_tabel():
+    for row in tree.get_children():
+        tree.delete(row)
+    for i, (nama, buku, tgl_pinjam, tgl_kembali) in enumerate(data_peminjaman, start=1):
+        tree.insert('', 'end', values=(i, nama, buku, tgl_pinjam, tgl_kembali))
+
+root = tk.Tk()
+root.title("Aplikasi Peminjaman Buku Perpustakaan")
+root.geometry("700x550")
+root.configure(bg="#f0f4f7")  
+
+judul = tk.Label(
+    root,
+    text="Aplikasi Peminjaman Buku Perpustakaan",
+    font=("Arial", 16, "bold"),
+    bg="#4a90e2",
+    fg="white",
+    pady=10,
+    anchor="center" 
+)
+judul.pack(fill='x', pady=(0, 10))
+
+frame_form = tk.Frame(root, bg="#e3eaf2", bd=2, relief="groove")
+frame_form.pack(pady=10, padx=20, fill='x')
+
+tk.Label(frame_form, text="Nama Peminjam", justify="center", anchor="center", bg="#e3eaf2", font=("Arial", 11)).grid(row=0, column=0, padx=5, pady=8, sticky='ew')
+entry_nama = tk.Entry(frame_form, width=30, justify="center", font=("Arial", 11))
+entry_nama.grid(row=0, column=1, padx=5, pady=8)
+
+tk.Label(frame_form, text="Pilih Buku", bg="#e3eaf2", font=("Arial", 11), anchor="center", justify="center").grid(row=1, column=0, padx=5, pady=8, sticky='ew')
+combo_buku = ttk.Combobox(frame_form, values=buku_tersedia, state="readonly", width=28, font=("Arial", 11), justify="center")
+combo_buku.grid(row=1, column=1, padx=5, pady=8)
+
+tk.Label(frame_form, text="Tanggal Pengembalian", bg="#e3eaf2", font=("Arial", 11), anchor="center", justify="center").grid(row=2, column=0, padx=5, pady=8, sticky='ew')
+entry_tanggal_kembali = tk.Entry(frame_form, width=30, font=("Arial", 11), justify="center")
+entry_tanggal_kembali.grid(row=2, column=1, padx=5, pady=8)
+
+btn_pinjam = tk.Button(frame_form, text="Pinjam Buku", command=pinjam_buku, bg="#4a90e2", fg="white", font=("Arial", 11, "bold"))
+btn_pinjam.grid(row=3, column=0, columnspan=2, pady=12, sticky='ew')
+
+frame_tabel = tk.Frame(root, bg="#f0f4f7")
+frame_tabel.pack(pady=10, padx=20, fill='x')
+
+tk.Label(frame_tabel, text="Data Peminjaman", font=("Arial", 13, "bold"), bg="#f0f4f7", anchor="center").pack(fill='x', pady=5)
+
+# Scrollbar untuk tabel Data Peminjaman
+tree_scroll = tk.Scrollbar(frame_tabel, orient="vertical")
+tree_scroll.pack(side="right", fill="y")
+
+tree = ttk.Treeview(
+    frame_tabel,
+    columns=('No', 'Nama', 'Buku', 'Tanggal Pinjam', 'Tanggal Kembali'),
+    show='headings',
+    yscrollcommand=tree_scroll.set
+)
+tree.heading('No', text='No', anchor="center")
+tree.heading('Nama', text='Nama Peminjam', anchor="center")
+tree.heading('Buku', text='Judul Buku', anchor="center")
+tree.heading('Tanggal Pinjam', text='Tanggal Peminjaman', anchor="center")
+tree.heading('Tanggal Kembali', text='Tanggal Pengembalian', anchor="center")
+tree.column('No', anchor="center", width=40)
+tree.column('Nama', anchor="center", width=120)
+tree.column('Buku', anchor="center", width=120)
+tree.column('Tanggal Pinjam', anchor="center", width=110)
+tree.column('Tanggal Kembali', anchor="center", width=120)
+tree.pack(fill='x')
+
+tree_scroll.config(command=tree.yview)
+
+frame_stok = tk.Frame(root, bg="#f0f4f7")
+frame_stok.pack(pady=10, padx=20, fill='x')
+
+tk.Label(frame_stok, text="Stok Buku", font=("Arial", 13, "bold"), bg="#f0f4f7", anchor="center").pack(fill='x', pady=5)
+
+stok_scroll = tk.Scrollbar(frame_stok, orient="vertical")
+stok_scroll.pack(side="right", fill="y")
+
+tree_stok = ttk.Treeview(
+    frame_stok,
+    columns=('Judul Buku', 'Stok'),
+    show='headings',
+    height=15,
+    yscrollcommand=stok_scroll.set
+)
+tree_stok.heading('Judul Buku', text='Judul Buku', anchor="center")
+tree_stok.heading('Stok', text='Stok', anchor="center")
+tree_stok.column('Judul Buku', anchor="center", width=150)
+tree_stok.column('Stok', anchor="center", width=50)
+tree_stok.pack(fill='x')
+
+stok_scroll.config(command=tree_stok.yview)
+
+label_stok_habis = tk.Label(frame_stok, text="", font=("Arial", 10, "bold"), bg="#f0f4f7", anchor="center")
+label_stok_habis.pack(fill='x')
+
+update_tabel_stok()
+
+root.mainloop()
